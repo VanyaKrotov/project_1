@@ -1,37 +1,35 @@
 import React, { useEffect } from "react";
-import { Nav, Sidenav } from "rsuite";
+import { StateProvider, useLocalState } from "projectx.state-react";
 import {
-  Link,
   Navigate,
   Route,
   Routes,
   useLocation,
   useSearchParams,
 } from "react-router-dom";
-import { observer, useLocalObservable } from "projectx.store-react";
-
-import { viewStore } from "entities/view";
 
 import Layout from "components/layout";
 
-import { SECTIONS } from "./shared/constants";
-import HomePageState from "./shared/state";
+import HomeState from "./shared/state";
 import { createSearchParam } from "./shared/selectors";
 
-import { Examples, Install, Intro, Started } from "./components";
+import { Section } from "./components";
+import { SideNav } from "./modules";
+
+import "./styles.scss";
 
 const HomePage = () => {
-  const store = useLocalObservable(() => new HomePageState());
+  const state = useLocalState(() => new HomeState());
   const { pathname } = useLocation();
   const [search] = useSearchParams();
   const version = search.get("version") || "0.1.0";
-  const lib = search.get("lib") || "store";
+  const lib = search.get("lib") || "state";
 
   useEffect(() => {
-    store.loadData(`${lib}.${version}`);
+    state.loadData(`${lib}.${version}`);
   }, [lib, version]);
 
-  const section: string = pathname.replace(/^\/docs\/*/, "");
+  const section = pathname.replace(/^\/docs\/*/, "");
   if (!section) {
     return (
       <Navigate
@@ -41,68 +39,53 @@ const HomePage = () => {
     );
   }
 
-  const loading = store.loading;
-  if (loading) {
-    return <div>loading...</div>;
-  }
-
-  if (store.error || !store.data) {
-    return <div>error</div>;
-  }
-
-  const sectionData = store.data.sections[section];
-  console.log(sectionData);
-  console.log(lib);
+  const currentSectionPath = state.data.data?.sections[section].path;
 
   return (
-    <Layout
-      sidebar={
-        <Sidenav
-          appearance="subtle"
-          defaultOpenKeys={Object.keys(viewStore.data!.packages)}
-        >
-          <Nav activeKey={`${lib}-${section}`}>
-            {Object.entries(viewStore.data!.packages).map(([libname]) => (
-              <Nav.Menu
-                title={<b>projectx.{libname}</b>}
-                eventKey={libname}
-                key={libname}
-              >
-                {SECTIONS.map(({ eventKey, pathname, title }) => {
-                  const key = `${libname}-${eventKey}`;
-
-                  return (
-                    <Nav.Item
-                      as={Link}
-                      key={key}
-                      eventKey={key}
-                      to={{
-                        pathname,
-                        search: createSearchParam(libname, version),
-                      }}
-                    >
-                      {title}
-                    </Nav.Item>
-                  );
-                })}
-              </Nav.Menu>
-            ))}
-
-            <Nav.Item>
-              <b>Что-то еще?</b>
-            </Nav.Item>
-          </Nav>
-        </Sidenav>
-      }
-    >
-      <Routes>
-        <Route path="intro" element={<Intro data={sectionData} />} />
-        <Route path="install" element={<Install data={sectionData} />} />
-        <Route path="started" element={<Started data={sectionData} />} />
-        <Route path="examples" element={<Examples data={sectionData} />} />
-      </Routes>
+    <Layout sidebar={<SideNav lib={lib} section={section} version={version} />}>
+      <StateProvider state={() => state}>
+        <Routes>
+          <Route
+            path="intro"
+            element={
+              <Section
+                path={currentSectionPath}
+                title={`Введение - ${lib}`}
+                toolbarProps={{
+                  next: { link: "/docs/install", title: "Установка" },
+                }}
+              />
+            }
+          />
+          <Route
+            path="install"
+            element={
+              <Section
+                path={currentSectionPath}
+                title={`Установка - ${lib}`}
+                toolbarProps={{
+                  next: { link: "/docs/examples", title: "Примеры" },
+                  prev: { link: "/docs/intro", title: "Введение" },
+                }}
+              />
+            }
+          />
+          <Route
+            path="examples"
+            element={
+              <Section
+                path={currentSectionPath}
+                title={`Примеры - ${lib}`}
+                toolbarProps={{
+                  prev: { link: "/docs/install", title: "Установка" },
+                }}
+              />
+            }
+          />
+        </Routes>
+      </StateProvider>
     </Layout>
   );
 };
 
-export default observer(HomePage);
+export default HomePage;

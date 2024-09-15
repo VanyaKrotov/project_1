@@ -1,0 +1,30 @@
+{
+  "name": "projectx.state",
+  "version": "0.0.10-beta",
+  "description": "State manager",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "author": {
+    "name": "Ivan Krotov",
+    "email": "vanyakrotov3059@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VanyaKrotov/projectx",
+    "directory": "packages/state"
+  },
+  "license": "ISC",
+  "keywords": [
+    "state",
+    "observe",
+    "reactive",
+    "state manager"
+  ],
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.194"
+  }
+}
